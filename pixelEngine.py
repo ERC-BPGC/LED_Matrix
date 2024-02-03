@@ -876,7 +876,15 @@ once = True # breaker
 timeGone = 0 # time Gone
 currTime = time.time()
 deltaTime = 0
-# =================================================================================================
+scoreLeft = 1
+scoreRight = 1
+health = 0
+leftColor = "#ff0000"
+rightColor = "#00ff00"
+healthLeft = 3
+healthRight = 5
+
+# LIFE can be in range [0, 5]
 # =================================================================================================
 
 gameChoice = None
@@ -885,12 +893,80 @@ beginTimer = False
 beginGame = False
 displayScore = False
 counter = 0
+titleCounter = 0
+titleDisplayed = False
+debugCounter = 0
+
+def updateScoreHeader():
+
+    global objArr, leftColor, scoreLeft, healthLeft, rightColor, scoreRight, healthRight
+
+    # Displaying health
+
+    for i in range(healthLeft):
+        lifeItem = object({
+            leftColor : [[0,0]]
+        }, {
+            "z_value" : 100,
+            "pos" : [i*2, 2],
+            "stayInFrame" : False,
+            "collision" : False,
+            "rotation" : False
+        })
+        objArr.append(lifeItem)
+    
+    for i in range(healthRight):
+        lifeItem = object({
+            rightColor : [[0,0]]
+        }, {
+            "z_value" : 100,
+            "pos" : [19 - i*2, 2],
+            "stayInFrame" : False,
+            "collision" : False,
+            "rotation" : False
+        })
+        objArr.append(lifeItem)
+    
+    # Displaying Score
+    
+    binScoreL = str(bin(scoreLeft))[2:]
+    binScoreR = str(bin(scoreRight))[2:]
+
+    scoreArray = []
+    for i in range(len(binScoreL)):
+        if (i%2)==0:
+            if binScoreL[i] == "1":
+                scoreArray.append([int(i/2),0])
+        else:
+            if binScoreL[i] == "1":
+                scoreArray.append([int((i-1)/2),1])
+
+    for i in range(len(binScoreR)):
+        if (i%2)==0:
+            if binScoreR[i] == "1":
+                scoreArray.append([19-int(i/2),0])
+        else:
+            if binScoreR[i] == "1":
+                scoreArray.append([19-int((i-1)/2),1])
+
+    scoreObj = object({
+        "#ffffff" : scoreArray
+    }, {
+        "z_value" : 100,
+        "pos" : [0,0],
+        "stayInFrame" : False,
+        "collision" : False,
+        "rotation" : False
+    })
+    objArr.append(scoreObj)
+
 
 def home():
     # title screen ===================================MAAAAAAAAKE ITTTTTTTTTTT
     global gameChoice
     global callHome
-    global once, beginTimer, beginGame, displayScore, counter
+    global once, beginTimer, beginGame, displayScore, counter, titleCounter
+    global titleDisplayed
 
     if getKeyState("1"):
         gameChoice = 1
@@ -916,49 +992,70 @@ def home():
         beginGame = False
         displayScore = False
         counter = 4
+        titleCounter = 0
+        titleDisplayed = False
 
 def game1():
 
     def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
         num = int(num)
 
         if (num > 3) or (num < 0):
             raise Exception("time out of range")
         
-        if num == 3:
-            print("3")
-        elif num == 2:
-            print("2")
-        elif num == 1:
-            print("1")
-        else:
-            print("GO")
+        objArr.clear()
 
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
 
     # variable access
     global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
-    global gameChoice, callHome
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight
 
     if once:
-        print("game 1 now playing")
-        # Game initialization
-        objArr.clear()
-        once = True
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
 
-        # this is your title : make exactly one object that comprises of your entire title screen
-        game1Title = txtObj("1",[9,17],"#ffff00",1,True,False)
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
 
-        objArr.append(game1Title)
+            objArr.append(game1Title)
 
-        once = False
-        beginTimer = True
-        print("Timer begins")
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
     elif beginTimer:
         counter -= deltaTime
         
         if counter <= 0:
             beginTimer = False
             beginGame = True
+            objArr.clear()
         elif counter <= 1:
             countDown(1)
         elif counter <= 2:
@@ -974,9 +1071,26 @@ def game1():
             displayScore = True
             counter = 0
         
+        objArr.clear()
+        
         # GAME HERE
+        
+        # for i in range(scoreLeft):
+        #     lifeItem = lineObj([i*2,1],[i*2,2],leftColor,100,False,False)
+        #     objArr.append(lifeItem)
+        
+        # objArr.append(lineObj([0,1],[0,2],"#ffffff",20,False,False))
+        
+        updateScoreHeader()
+        debugCounter += deltaTime
+
         print("GAME RUNNING")
-        endGame()
+
+        scoreLeft += 2
+        scoreRight += 1
+
+        if debugCounter > 360:
+            endGame()
     else:
         if displayScore:
             objArr.clear()
