@@ -1,6 +1,7 @@
 import tkinter as tk
 import keyboard # for getting key inputs
 import time
+import random
 
 # =============================================
 # IMPORT ANY LIBRARY YOU WANT HERE
@@ -897,6 +898,13 @@ titleCounter = 0
 titleDisplayed = False
 debugCounter = 0
 
+# =================================================================================================
+snakeArr = []
+applePos = []
+snakeMove = []
+snakeAppleAloneTime = 0
+snakeAppleEscape = 5
+
 def updateScoreHeader():
 
     global objArr, leftColor, scoreLeft, healthLeft, rightColor, scoreRight, healthRight
@@ -960,20 +968,29 @@ def updateScoreHeader():
     })
     objArr.append(scoreObj)
 
-
 def home():
     # title screen ===================================MAAAAAAAAKE ITTTTTTTTTTT
     global gameChoice
     global callHome
     global once, beginTimer, beginGame, displayScore, counter, titleCounter
-    global titleDisplayed
+    global titleDisplayed, objArr, background
 
+    global snakeArr, applePos, snakeMove, snakeAppleAloneTime, snakeAppleEscape
+
+    objArr.clear()
+    background = "#000000"
+    
     if getKeyState("1"):
         gameChoice = 1
         callHome = False
     elif getKeyState("2"):
         gameChoice = 2
         callHome = False
+        snakeArr = [[10,20]]
+        applePos = [10,10]
+        snakeMove = [0, -1]
+        snakeAppleAloneTime = 0
+        snakeAppleEscape = 5
     elif getKeyState("3"):
         gameChoice = 3
         callHome = False
@@ -1027,7 +1044,7 @@ def game1():
     # variable access
     global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
     global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
-    global leftColor, rightColor, scoreLeft, scoreRight
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
 
     if once:
         if not titleDisplayed:
@@ -1075,12 +1092,6 @@ def game1():
         
         # GAME HERE
         
-        # for i in range(scoreLeft):
-        #     lifeItem = lineObj([i*2,1],[i*2,2],leftColor,100,False,False)
-        #     objArr.append(lifeItem)
-        
-        # objArr.append(lineObj([0,1],[0,2],"#ffffff",20,False,False))
-        
         updateScoreHeader()
         debugCounter += deltaTime
 
@@ -1108,7 +1119,220 @@ def game1():
                 print("OVER :(")
 
 def game2():
-    pass
+
+    def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
+        num = int(num)
+
+        if (num > 3) or (num < 0):
+            raise Exception("time out of range")
+        
+        objArr.clear()
+
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
+
+    # variable access
+    global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
+
+    global snakeArr, objArr, applePos, snakeMove, snakeAppleAloneTime, snakeAppleEscape
+    global background
+
+    if once:
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
+
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
+
+            objArr.append(game1Title)
+
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
+    elif beginTimer:
+        counter -= deltaTime
+        
+        if counter <= 0:
+            beginTimer = False
+            beginGame = True
+            objArr.clear()
+        elif counter <= 1:
+            countDown(1)
+        elif counter <= 2:
+            countDown(2)
+        elif counter >= 3:
+            countDown(3)
+    elif beginGame:
+
+        def endGame():
+            global beginGame, displayScore, counter
+            # Call this function to end game
+            beginGame = False
+            displayScore = True
+            counter = 0
+        
+        def changeApplePos():
+
+            global applePos, snakeArr
+
+            applePos = [
+                random.randint(0,19),
+                random.randint(2,39)
+            ]
+
+            while applePos in snakeArr:
+                applePos = [
+                    random.randint(0,19),
+                    random.randint(2,39)
+                ]
+        
+        objArr.clear()
+        
+        # GAME HERE
+
+        if getKeyState("W"):
+            if snakeMove != [0, 1]:
+                snakeMove = [0, -1]
+        elif getKeyState("A"):
+            if snakeMove != [1, 0]:
+                snakeMove = [-1, 0]
+        elif getKeyState("S"):
+            if snakeMove != [0, -1]:
+                snakeMove = [0, 1]
+        elif getKeyState("D"):
+            if snakeMove != [-1, 0]:
+                snakeMove = [1, 0]
+        else:
+            pass
+
+        
+        nxtPos = [
+            snakeArr[0][0] + snakeMove[0],
+            snakeArr[0][1] + snakeMove[1]
+        ]
+
+        if nxtPos[0] < 0:
+            nxtPos[0] += 20
+        
+        if nxtPos[0] > 19:
+            nxtPos[0] -= 20
+
+        if nxtPos[1] < 2:
+            nxtPos[1] += 38
+        
+        if nxtPos[1] > 39:
+            nxtPos[1] -= 38
+
+        if (nxtPos in snakeArr) and (nxtPos != snakeArr[0]):
+            endGame()
+        else:
+            if nxtPos == applePos:
+                snakeAppleEscape += 0.1
+                snakeAppleAloneTime = 0
+                newArr = [nxtPos]
+                newArr.extend(snakeArr)
+                snakeArr = newArr.copy()
+
+                changeApplePos()
+            else:
+                if len(snakeArr) == 1:
+                    snakeArr[0] = nxtPos
+                else:
+                    newArr = [nxtPos]
+                    newArr.extend(snakeArr)
+                    snakeArr = newArr[:-1].copy()
+        
+        if snakeAppleAloneTime >= snakeAppleEscape:
+            changeApplePos()
+            snakeAppleEscape -= 0.1
+            snakeAppleAloneTime = 0
+        else:
+            snakeAppleAloneTime += deltaTime
+        
+        if snakeAppleEscape <= 0:
+            endGame()
+        
+        # make the huge pixel square
+        snakeObj = rectangleObj([0,0],[19,39],"#ffffff",60,False,False)
+        for x in range(20):
+            for y in range(40):
+                if [x,y] in snakeArr:
+                    if [x,y] == snakeArr[0]:
+                        snakeObj.changeColor([x,y],"#386641")
+                    else:
+                        snakeObj.changeColor([x,y],"#6a994e")
+                else:
+                    snakeObj.changeColor([x,y],None)
+        
+        objArr.append(snakeObj)
+
+        appleObj = object({
+            "#e94f37" : [[0,0]]
+        },{
+            "z_value" : 60,
+            "pos" : applePos,
+            "stayInFrame" : True,
+            "collision" : False,
+            "rotation" : False
+        })
+
+        objArr.append(appleObj)
+
+        scoreLeft = len(snakeArr) * 10
+        scoreRight = 0
+        healthLeft = 0
+        healthRight = 0
+
+        # AESTHATICS
+        background = "#a7c957"
+        
+        updateScoreHeader()
+        debugCounter += deltaTime
+    else:
+        if displayScore:
+            objArr.clear()
+
+            # display score here
+            scoreObj = txtObj("SCORE",[0,14],"#bc4749",5,False,False)
+            objArr.append(scoreObj)
+            scoreObj = txtObj(str(scoreLeft),[1,21],"#bc4749",5,False,False)
+            objArr.append(scoreObj)
+
+            displayScore = False
+        else:
+            counter += deltaTime
+
+            if counter >= 5:
+                gameChoice = None
+                callHome = True
+                print("OVER :(")
+
 
 def gameFrame():
 
