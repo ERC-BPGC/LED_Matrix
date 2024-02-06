@@ -3,14 +3,24 @@ import keyboard # for getting key inputs
 import time
 import random
 
-# =============================================
-# IMPORT ANY LIBRARY YOU WANT HERE
-# =============================================
-# ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+# CREDITS
 
-# import
+# ╔═══════════════BASE FRAMEWORK═════════════════════╗
+# ║ object creation and management : AYUSH YADAV     ║
+# ║ collisions, overlap detection  : AYUSH YADAV     ║
+# ║ object translation             : AYUSH YADAV     ║
+# ║ object rotation                : AYUSH YADAV     ║
+# ║ font                           : AYUSH YADAV     ║
+# ║ line, rectangle                : AYUSH YADAV     ║
+# ║ input detection                : AYUSH YADAV     ║
+# ╠═════════════════════GAMES════════════════════════╣
+# ║ Snake Game                     : AYUSH YADAV     ║
+# ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
+# ║ Pong Game                      : ATHARV SALONKHE ║                             
+# ║                                : AYUSH YADAV     ║ (bug fixes, significant improvements)
+# ╚═════════SOFTWARE HARDWARE COMMUNICATION══════════╝
 
-# ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+
 
 # SOME ASSUMPTIONS
 # X values are the column numbers starting from 0 (LEFT) to 19 (RIGHT)
@@ -1151,6 +1161,7 @@ def game1():
                 print("OVER :(")
 
 def game2():
+    # created by AYUSH YADAV
 
     def countDown(num):
 
@@ -1366,6 +1377,9 @@ def game2():
                 print("OVER :(")
 
 def game3():
+    # PONG
+    # created by ATHARV SALONKHE
+    # bug fixes, other significant adjustments by AYUSH YADAV
 
     def countDown(num):
 
