@@ -264,10 +264,16 @@ def updateCollision(obj, newPixArr):
     for y in range(len(newPixArr)):
         for x in range(len(newPixArr)):
             if newPixArr[y][x] is not None:
-                coordArr.append([
-                    x - obj.rot_mid,
-                    y - obj.rot_mid
-                ])
+                if obj.rotation:
+                    coordArr.append([
+                        x - obj.rot_mid,
+                        y - obj.rot_mid
+                    ])
+                else:
+                    coordArr.append([
+                        x,
+                        y
+                    ])
 
     size = obj.getBoundingBox(coordArr)
     obj.calcPadding()
@@ -877,17 +883,16 @@ once = True # breaker
 timeGone = 0 # time Gone
 currTime = time.time()
 deltaTime = 0
-scoreLeft = 1
-scoreRight = 1
+scoreLeft = 0
+scoreRight = 0
 health = 0
 leftColor = "#ff0000"
 rightColor = "#00ff00"
-healthLeft = 3
-healthRight = 5
+healthLeft = 0
+healthRight = 0
 
 # LIFE can be in range [0, 5]
-# =================================================================================================
-
+# ================================================================================================
 gameChoice = None
 callHome = True
 beginTimer = False
@@ -905,68 +910,81 @@ snakeMove = []
 snakeAppleAloneTime = 0
 snakeAppleEscape = 5
 
+# =================================================================================================
+pongPaddleT = None
+pongPaddleB = None
+pongBall = None
+pongPowerUp = None
+pongOnce = None
+pongBallVel = None
+pongBreakTimer = None
+pongEnd = None
+
+
 def updateScoreHeader():
 
     global objArr, leftColor, scoreLeft, healthLeft, rightColor, scoreRight, healthRight
 
     # Displaying health
 
-    for i in range(healthLeft):
-        lifeItem = object({
-            leftColor : [[0,0]]
+    if scoreLeft + scoreRight > 0:
+
+        for i in range(healthLeft):
+            lifeItem = object({
+                leftColor : [[0,0]]
+            }, {
+                "z_value" : 100,
+                "pos" : [i*2, 2],
+                "stayInFrame" : False,
+                "collision" : False,
+                "rotation" : False
+            })
+            objArr.append(lifeItem)
+        
+        for i in range(healthRight):
+            lifeItem = object({
+                rightColor : [[0,0]]
+            }, {
+                "z_value" : 100,
+                "pos" : [19 - i*2, 2],
+                "stayInFrame" : False,
+                "collision" : False,
+                "rotation" : False
+            })
+            objArr.append(lifeItem)
+        
+        # Displaying Score
+        
+        binScoreL = str(bin(scoreLeft))[2:]
+        binScoreR = str(bin(scoreRight))[2:]
+
+        scoreArray = []
+        for i in range(len(binScoreL)):
+            if (i%2)==0:
+                if binScoreL[i] == "1":
+                    scoreArray.append([int(i/2),0])
+            else:
+                if binScoreL[i] == "1":
+                    scoreArray.append([int((i-1)/2),1])
+
+        for i in range(len(binScoreR)):
+            if (i%2)==0:
+                if binScoreR[i] == "1":
+                    scoreArray.append([19-int(i/2),0])
+            else:
+                if binScoreR[i] == "1":
+                    scoreArray.append([19-int((i-1)/2),1])
+
+        scoreObj = object({
+            "#ffffff" : scoreArray
         }, {
             "z_value" : 100,
-            "pos" : [i*2, 2],
+            "pos" : [0,0],
             "stayInFrame" : False,
             "collision" : False,
             "rotation" : False
         })
-        objArr.append(lifeItem)
-    
-    for i in range(healthRight):
-        lifeItem = object({
-            rightColor : [[0,0]]
-        }, {
-            "z_value" : 100,
-            "pos" : [19 - i*2, 2],
-            "stayInFrame" : False,
-            "collision" : False,
-            "rotation" : False
-        })
-        objArr.append(lifeItem)
-    
-    # Displaying Score
-    
-    binScoreL = str(bin(scoreLeft))[2:]
-    binScoreR = str(bin(scoreRight))[2:]
-
-    scoreArray = []
-    for i in range(len(binScoreL)):
-        if (i%2)==0:
-            if binScoreL[i] == "1":
-                scoreArray.append([int(i/2),0])
-        else:
-            if binScoreL[i] == "1":
-                scoreArray.append([int((i-1)/2),1])
-
-    for i in range(len(binScoreR)):
-        if (i%2)==0:
-            if binScoreR[i] == "1":
-                scoreArray.append([19-int(i/2),0])
-        else:
-            if binScoreR[i] == "1":
-                scoreArray.append([19-int((i-1)/2),1])
-
-    scoreObj = object({
-        "#ffffff" : scoreArray
-    }, {
-        "z_value" : 100,
-        "pos" : [0,0],
-        "stayInFrame" : False,
-        "collision" : False,
-        "rotation" : False
-    })
-    objArr.append(scoreObj)
+        objArr.append(scoreObj)
 
 def home():
     # title screen ===================================MAAAAAAAAKE ITTTTTTTTTTT
@@ -976,6 +994,7 @@ def home():
     global titleDisplayed, objArr, background
 
     global snakeArr, applePos, snakeMove, snakeAppleAloneTime, snakeAppleEscape
+    global pongPaddleT, pongPaddleB, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer, pongEnd
 
     objArr.clear()
     background = "#000000"
@@ -986,6 +1005,7 @@ def home():
     elif getKeyState("2"):
         gameChoice = 2
         callHome = False
+
         snakeArr = [[10,20]]
         applePos = [10,10]
         snakeMove = [0, -1]
@@ -994,6 +1014,18 @@ def home():
     elif getKeyState("3"):
         gameChoice = 3
         callHome = False
+
+        pongPaddleT = None
+        pongPaddleB = None
+        pongBall = None
+        pongPowerUp = None
+        pongOnce = True
+        pongBallVel = [
+            random.choice([1,-1]),
+            random.choice([1,-1])
+        ]
+        pongBreakTimer = 0
+        pongEnd = 0
     elif getKeyState("4"):
         gameChoice = 4
         callHome = False
@@ -1333,6 +1365,259 @@ def game2():
                 callHome = True
                 print("OVER :(")
 
+def game3():
+
+    def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
+        num = int(num)
+
+        if (num > 3) or (num < 0):
+            raise Exception("time out of range")
+        
+        objArr.clear()
+
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
+
+    # variable access
+    global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
+
+    global pongPaddleT, pongPaddleB, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer
+
+    if once:
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
+
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
+
+            objArr.append(game1Title)
+
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
+    elif beginTimer:
+        counter -= deltaTime
+        
+        if counter <= 0:
+            beginTimer = False
+            beginGame = True
+            objArr.clear()
+        elif counter <= 1:
+            countDown(1)
+        elif counter <= 2:
+            countDown(2)
+        elif counter >= 3:
+            countDown(3)
+    elif beginGame:
+
+        def endGame():
+            global beginGame, displayScore, counter
+            # Call this function to end game
+            beginGame = False
+            displayScore = True
+            counter = 0
+        
+        objArr.clear()
+        
+        # GAME HERE
+        if pongOnce:
+
+            pongPaddleT = object({
+                "#e07a5f": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]]
+            }, {
+                "z_value": 4,
+                "pos": [8, 2],
+                "stayInFrame": True,
+                "collision": True
+            })
+            pongPaddleB = object({
+                "#81b29a": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]]
+            }, {
+                "z_value": 4,
+                "pos": [8, 38],
+                "stayInFrame": True,
+                "collision": True
+            })
+            pongBall = object({
+                "#f4f1de": [[0, 0]]
+            }, {
+                "z_value": 3,
+                "pos": [
+                    random.randint(5,15),
+                    random.randint(0,2) + 19
+                ],
+                "stayInFrame": True,
+                "collision": True
+            })
+
+            objArr.extend([
+                pongPaddleB, pongBall, pongPaddleT
+            ])
+
+            pongOnce = False
+        else:
+
+            def shortenPaddle(ref):
+                
+                global pongPaddleT, pongPaddleB, pongEnd
+
+                if len(ref.pixelArr[0]) > 1:
+                    TpixArr = ref.pixelArr[0].copy()
+                    TpixArr.pop(len(TpixArr)-1)
+                    updateCollision(ref,[TpixArr])
+                else:
+                    endGame()
+
+                    if ref == pongPaddleT:
+                        pongEnd = 1
+                    else:
+                        pongEnd = -1
+            
+            def lengthenPaddle(ref):
+                if len(ref.pixelArr[0]) > 1:
+                    TpixArr = ref.pixelArr[0].copy()
+                    TpixArr.append(TpixArr[-1])
+                    updateCollision(ref,[TpixArr])
+
+            if getKeyState("Q"):
+                if pongPaddleT.curr_pos[0] >= 0:
+                    offset(pongPaddleT, [-1,0])
+            if getKeyState("E"):
+                if pongPaddleT.curr_pos[0] <= 19 - len(pongPaddleT.pixelArr[0]):
+                    offset(pongPaddleT, [1,0])
+            if getKeyState("Left"):
+                if pongPaddleB.curr_pos[0] >= 0:
+                    offset(pongPaddleB, [-1,0])
+            if getKeyState("Right"):
+                if pongPaddleB.curr_pos[0] <= 19 - len(pongPaddleB.pixelArr[0]):
+                    offset(pongPaddleB, [1,0])
+
+            if pongBreakTimer >= 1.5:
+                offset(pongBall,pongBallVel)
+            else:
+                pongBreakTimer += deltaTime
+
+            if pongBall.curr_pos[0] in [0,19]:
+                pongBallVel[0] *= -1
+            
+            if (pongBall.curr_pos[1] == 3) and (pongBall.curr_pos[0] >= pongPaddleT.curr_pos[0]) and (pongBall.curr_pos[0] <= (pongPaddleT.curr_pos[0] + len(pongPaddleT.pixelArr[0])-1)):
+                pongBallVel[1] *= -1
+            if (pongBall.curr_pos[1] == 37) and (pongBall.curr_pos[0] >= pongPaddleB.curr_pos[0]) and (pongBall.curr_pos[0] <= (pongPaddleB.curr_pos[0] + len(pongPaddleB.pixelArr[0])-1)):
+                pongBallVel[1] *= -1
+            
+            if pongBall.curr_pos[1] <= 1:
+                shortenPaddle(pongPaddleT)
+                lengthenPaddle(pongPaddleB)
+                newPos = [
+                    random.randint(5,15),
+                    random.randint(0,2) + 19
+                ]
+                offset(pongBall,[
+                    newPos[0] - pongBall.curr_pos[0],
+                    newPos[1] - pongBall.curr_pos[1]
+                ])
+                pongBallVel = [
+                    random.choice([1,-1]),
+                    random.choice([1,-1])
+                ]
+                pongBreakTimer = 0
+            
+            if pongBall.curr_pos[1] >= 39:
+                shortenPaddle(pongPaddleB)
+                lengthenPaddle(pongPaddleT)
+                newPos = [
+                    random.randint(5,15),
+                    random.randint(0,2) + 19
+                ]
+                offset(pongBall,[
+                    newPos[0] - pongBall.curr_pos[0],
+                    newPos[1] - pongBall.curr_pos[1]
+                ])
+                pongBallVel = [
+                    random.choice([1,-1]),
+                    random.choice([1,-1])
+                ]
+                pongBreakTimer = 0
+
+            objArr.extend([
+                pongPaddleB, pongBall, pongPaddleT
+            ])
+        
+        updateScoreHeader()
+        debugCounter += deltaTime
+
+        # print("GAME RUNNING")
+    else:
+        if displayScore:
+            objArr.clear()
+
+            # display score here
+            print("SCORE")
+
+            if pongEnd == -1:
+                # TOP WON
+                winScreen = object({
+                    "#ffffff": [
+                        [0,0], [-1,1], [1,1], [-2,2], [2,2]
+                    ]
+                }, {
+                    "z_value": 9,
+                    "pos": [10, 20],
+                    "stayInFrame": True,
+                    "collision": False
+                })
+
+                objArr.append(winScreen)
+            else:
+                # BOT WON
+                winScreen = object({
+                    "#ffffff": [
+                        [0,0], [-1,-1], [1,-1], [-2,-2], [2,-2]
+                    ]
+                }, {
+                    "z_value": 9,
+                    "pos": [10, 20],
+                    "stayInFrame": True,
+                    "collision": False
+                })
+
+                objArr.append(winScreen)
+
+            displayScore = False
+        else:
+            counter += deltaTime
+
+            if counter >= 5:
+                gameChoice = None
+                callHome = True
+                print("OVER :(")
+
 
 def gameFrame():
 
@@ -1346,7 +1631,7 @@ def gameFrame():
         elif gameChoice == 2:
             game2()
         elif gameChoice == 3:
-            pass
+            game3()
         elif gameChoice == 4:
             pass
         elif gameChoice == 5:
