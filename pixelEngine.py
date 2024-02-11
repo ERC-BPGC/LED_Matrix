@@ -18,6 +18,8 @@ import random
 # ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
 # ║ Pong Game                      : ATHARV SALONKHE ║                             
 # ║                                : AYUSH YADAV     ║ (bug fixes, significant improvements)
+# ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
+# ║ Attari Game                    : AYUSH YADAV     ║ 
 # ╚═════════SOFTWARE HARDWARE COMMUNICATION══════════╝
 
 
@@ -1177,6 +1179,7 @@ def demoGame():
                 print("OVER :(")
 
 def game2():
+    # SNAKE
     # created by AYUSH YADAV
 
     def countDown(num):
@@ -1343,9 +1346,9 @@ def game2():
             for y in range(40):
                 if [x,y] in snakeArr:
                     if [x,y] == snakeArr[0]:
-                        snakeObj.changeColor([x,y],"#386641")
+                        snakeObj.changeColor([x,y],"#386641") # head
                     else:
-                        snakeObj.changeColor([x,y],"#6a994e")
+                        snakeObj.changeColor([x,y],"#6a994e") # body
                 else:
                     snakeObj.changeColor([x,y],None)
         
@@ -1370,6 +1373,16 @@ def game2():
 
         # AESTHATICS
         background = "#a7c957"
+
+        nilayAes = object({
+            "#e94f37" : [[0,0]]
+        },{
+            "z_value" : 1,
+            "pos" : [0,0],
+            "stayInFrame" : True,
+            "collision" : False,
+            "rotation" : False
+        })
         
         updateScoreHeader()
         debugCounter += deltaTime
@@ -1649,6 +1662,8 @@ def game3():
                 print("OVER :(")
 
 def game4():
+    # ATTARI
+    # created by AYUSH YADAV
 
     def countDown(num):
 
