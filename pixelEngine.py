@@ -388,6 +388,17 @@ def rotate(obj, amt):
     # this function rotates the given 'obj' by 'amt'
     # amt +1 = CCW by 90 degree ; +2 = CCW by 180 degree
     # amt -1 = CW  by 90 degree ; -2 = CW  by 180 degree
+
+    def checkBounds(obj):
+        if obj.curr_pos[0] + obj.rigPad > 19:
+            return False
+        if obj.curr_pos[0] - obj.lefPad < 0:
+            return False
+        if obj.curr_pos[1] + obj.botPad > 39:
+            return False
+        if obj.curr_pos[1] - obj.topPad < 0:
+            return False
+        return True
     
     def getNewPixArr():
         mid = obj.rot_mid
@@ -429,7 +440,7 @@ def rotate(obj, amt):
         updateCollision(obj, getNewPixArr())
 
         # checking if this rotation causes collision
-        if checkOverlap(obj,obj.curr_pos):
+        if checkOverlap(obj,obj.curr_pos) and checkBounds(obj):
             # reverting changes
             updateCollision(obj, preservedArr.copy())
 
@@ -1991,10 +2002,27 @@ def renderFrame(cv, side):
                     if (onMatrixPos_y >= 0) and (onMatrixPos_y <= 39):
                         if pixelArr[r][c] is not None:
                             matrix[onMatrixPos_y][onMatrixPos_x] = pixelArr[r][c]
+    
     # for x in matrix:
     #     print(x)
     # z = int(input(""))
+                            
+    # COLUMN WISE MATRIX
+    colMat = []
 
+    for colNum in range(20):
+        firstTime = True
+        for rowNum in range(40):
+            if firstTime:
+                colMat.append([matrix[rowNum][colNum]])
+                firstTime = False
+            else:
+                colMat[colNum].append(matrix[rowNum][colNum])
+    
+    # this column matrix stores data column wise as is required by the row-wise arrangement of the pixel
+
+
+    # VISUAL DEBUG
     # painting the tkinter output screen as per matrix array
     cv.delete("all") # clear screen
     for r in range(40):
