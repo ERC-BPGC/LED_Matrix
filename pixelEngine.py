@@ -922,13 +922,19 @@ snakeAppleEscape = 5
 
 # =================================================================================================
 pongPaddleT = None
-pongPaddleB = None
+attPaddle = None
 pongBall = None
 pongPowerUp = None
 pongOnce = None
 pongBallVel = None
 pongBreakTimer = None
 pongEnd = None
+
+# =================================================================================================
+attPaddle = None
+attBall = None
+attOnce = None
+attBallVel = None
 
 
 def updateScoreHeader():
@@ -1004,7 +1010,8 @@ def home():
     global titleDisplayed, objArr, background
 
     global snakeArr, applePos, snakeMove, snakeAppleAloneTime, snakeAppleEscape
-    global pongPaddleT, pongPaddleB, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer, pongEnd
+    global pongPaddleT, attPaddle, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer, pongEnd
+    global attPaddle, attBall, attOnce, attBallVel, attStage
 
     objArr.clear()
     background = "#000000"
@@ -1026,7 +1033,7 @@ def home():
         callHome = False
 
         pongPaddleT = None
-        pongPaddleB = None
+        attPaddle = None
         pongBall = None
         pongPowerUp = None
         pongOnce = True
@@ -1039,6 +1046,15 @@ def home():
     elif getKeyState("4"):
         gameChoice = 4
         callHome = False
+
+        attPaddle = None
+        attBall = None
+        attOnce = True
+        attBallVel = [
+            random.choice([1,-1]),
+            1
+        ]
+        attStage = None
     elif getKeyState("5"):
         gameChoice = 5
         callHome = False
@@ -1054,7 +1070,7 @@ def home():
         titleCounter = 0
         titleDisplayed = False
 
-def game1():
+def demoGame():
 
     def countDown(num):
 
@@ -1413,7 +1429,7 @@ def game3():
     global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
     global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
 
-    global pongPaddleT, pongPaddleB, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer
+    global pongPaddleT, attPaddle, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer
 
     if once:
         if not titleDisplayed:
@@ -1470,7 +1486,7 @@ def game3():
                 "stayInFrame": True,
                 "collision": True
             })
-            pongPaddleB = object({
+            attPaddle = object({
                 "#81b29a": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]]
             }, {
                 "z_value": 4,
@@ -1491,7 +1507,7 @@ def game3():
             })
 
             objArr.extend([
-                pongPaddleB, pongBall, pongPaddleT
+                attPaddle, pongBall, pongPaddleT
             ])
 
             pongOnce = False
@@ -1499,7 +1515,7 @@ def game3():
 
             def shortenPaddle(ref):
                 
-                global pongPaddleT, pongPaddleB, pongEnd
+                global pongPaddleT, attPaddle, pongEnd
 
                 if len(ref.pixelArr[0]) > 1:
                     TpixArr = ref.pixelArr[0].copy()
@@ -1514,7 +1530,7 @@ def game3():
                         pongEnd = -1
             
             def lengthenPaddle(ref):
-                if len(ref.pixelArr[0]) > 1:
+                if len(ref.pixelArr[0]) >= 1:
                     TpixArr = ref.pixelArr[0].copy()
                     TpixArr.append(TpixArr[-1])
                     updateCollision(ref,[TpixArr])
@@ -1526,11 +1542,11 @@ def game3():
                 if pongPaddleT.curr_pos[0] <= 19 - len(pongPaddleT.pixelArr[0]):
                     offset(pongPaddleT, [1,0])
             if getKeyState("Left"):
-                if pongPaddleB.curr_pos[0] >= 0:
-                    offset(pongPaddleB, [-1,0])
+                if attPaddle.curr_pos[0] >= 0:
+                    offset(attPaddle, [-1,0])
             if getKeyState("Right"):
-                if pongPaddleB.curr_pos[0] <= 19 - len(pongPaddleB.pixelArr[0]):
-                    offset(pongPaddleB, [1,0])
+                if attPaddle.curr_pos[0] <= 19 - len(attPaddle.pixelArr[0]):
+                    offset(attPaddle, [1,0])
 
             if pongBreakTimer >= 1.5:
                 offset(pongBall,pongBallVel)
@@ -1542,12 +1558,12 @@ def game3():
             
             if (pongBall.curr_pos[1] == 3) and (pongBall.curr_pos[0] >= pongPaddleT.curr_pos[0]) and (pongBall.curr_pos[0] <= (pongPaddleT.curr_pos[0] + len(pongPaddleT.pixelArr[0])-1)):
                 pongBallVel[1] *= -1
-            if (pongBall.curr_pos[1] == 37) and (pongBall.curr_pos[0] >= pongPaddleB.curr_pos[0]) and (pongBall.curr_pos[0] <= (pongPaddleB.curr_pos[0] + len(pongPaddleB.pixelArr[0])-1)):
+            if (pongBall.curr_pos[1] == 37) and (pongBall.curr_pos[0] >= attPaddle.curr_pos[0]) and (pongBall.curr_pos[0] <= (attPaddle.curr_pos[0] + len(attPaddle.pixelArr[0])-1)):
                 pongBallVel[1] *= -1
             
             if pongBall.curr_pos[1] <= 1:
                 shortenPaddle(pongPaddleT)
-                lengthenPaddle(pongPaddleB)
+                lengthenPaddle(attPaddle)
                 newPos = [
                     random.randint(5,15),
                     random.randint(0,2) + 19
@@ -1563,7 +1579,7 @@ def game3():
                 pongBreakTimer = 0
             
             if pongBall.curr_pos[1] >= 39:
-                shortenPaddle(pongPaddleB)
+                shortenPaddle(attPaddle)
                 lengthenPaddle(pongPaddleT)
                 newPos = [
                     random.randint(5,15),
@@ -1580,7 +1596,7 @@ def game3():
                 pongBreakTimer = 0
 
             objArr.extend([
-                pongPaddleB, pongBall, pongPaddleT
+                attPaddle, pongBall, pongPaddleT
             ])
         
         updateScoreHeader()
@@ -1632,6 +1648,260 @@ def game3():
                 callHome = True
                 print("OVER :(")
 
+def game4():
+
+    def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
+        num = int(num)
+
+        if (num > 3) or (num < 0):
+            raise Exception("time out of range")
+        
+        objArr.clear()
+
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
+
+    # variable access
+    global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
+
+    global attPaddle, attBall, attOnce, attBallVel, attStage
+
+    if once:
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
+
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
+
+            objArr.append(game1Title)
+
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
+    elif beginTimer:
+        counter -= deltaTime
+        
+        if counter <= 0:
+            beginTimer = False
+            beginGame = True
+            objArr.clear()
+        elif counter <= 1:
+            countDown(1)
+        elif counter <= 2:
+            countDown(2)
+        elif counter >= 3:
+            countDown(3)
+    elif beginGame:
+
+        def endGame():
+            global beginGame, displayScore, counter
+            # Call this function to end game
+            beginGame = False
+            displayScore = True
+            counter = 0
+        
+        objArr.clear()
+        
+        # GAME HERE
+        if attOnce:
+            attOnce = False
+
+            attPaddle = object({
+                "#81b29a": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]]
+            }, {
+                "z_value": 4,
+                "pos": [8, 38],
+                "stayInFrame": True,
+                "collision": True
+            })
+            attBall = object({
+                "#f4f1de": [[0, 0]]
+            }, {
+                "z_value": 3,
+                "pos": [10, 36],
+                "stayInFrame": True,
+                "collision": True
+            })
+            attStage = object({
+                "#ffffff": [
+                    [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
+                    [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0]
+                    ]
+            }, {
+                "z_value": 4,
+                "pos": [0, 15],
+                "stayInFrame": True,
+                "collision": True
+            })
+
+            objArr.extend([
+                attPaddle, attBall, attStage
+            ])
+        else:
+
+            if getKeyState("Left"):
+                if attPaddle.curr_pos[0] >= 0:
+                    offset(attPaddle, [-1,0])
+            if getKeyState("Right"):
+                if attPaddle.curr_pos[0] <= 19 - len(attPaddle.pixelArr[0]):
+                    offset(attPaddle, [1,0])
+
+            # check collision with level
+            newPos = [
+                attBall.curr_pos[0] + attBallVel[0],
+                attBall.curr_pos[1] + attBallVel[1]
+            ]
+
+            for y in range(len(attStage.pixelArr)):
+                for x in range(len(attStage.pixelArr[y])):
+                    if attStage.pixelArr[y][x] is not None:
+                        coordX = x + attStage.curr_pos[0] + attStage.minX
+                        coordY = y + attStage.curr_pos[1] + attStage.minY
+
+                        if (coordX == newPos[0]) and (coordY == newPos[1]):
+
+                            def checkExistence(checkPosRel):
+
+                                global attStage
+
+                                cX = checkPosRel[0] - attStage.curr_pos[0] - attStage.minX
+                                cY = checkPosRel[1] - attStage.curr_pos[1] - attStage.minY
+
+                                if (cY >= 0) and (cY < len(attStage.pixelArr)):
+                                    if (cX >= 0) and (cX < len(attStage.pixelArr[cY])):
+                                        if attStage.pixelArr[cY][cX] is not None:
+                                            return True
+                                        else:
+                                            return False
+                                    return False
+                                return False
+
+
+                            print("DAMN") # collision will happen
+
+                            # getting the surround state
+                            surroundState = [
+                                [None, None, None],
+                                [None, None, None],
+                                [None, None, None]
+                            ]
+
+                            for m in range(3):
+                                relX = m - 1
+                                for n in range(3):
+                                    relY = n - 1
+                                    if (relX == 0) and (relY == 0):
+                                        pass
+                                    else:
+                                        checkX = attBall.curr_pos[0] + relX
+                                        checkY = attBall.curr_pos[1] + relY
+
+                                        if (checkX >= 0) and (checkX <= 19):
+                                            if (checkY >= 0) and (checkY <= 39):
+                                                
+                                                print(checkX, checkY)
+                                                surroundState[n][m] = checkExistence([checkX, checkY])
+                            
+                            # debug surround state
+                            for ja in surroundState:
+                                print(ja)
+                            
+                            if attBallVel == [1, -1]:
+                                # going top right
+                                if surroundState[0][1] and (not surroundState[1][2]):
+                                    attBallVel = [1, 1]
+                                elif (not surroundState[0][1]) and surroundState[1][2]:
+                                    attBallVel = [-1, -1]
+                                else:
+                                    attBallVel = [-1, 1]
+                            elif attBallVel == [1, 1]:
+                                # going bot right
+                                if surroundState[2][1] and (not surroundState[1][2]):
+                                    attBallVel = [1, -1]
+                                elif (not surroundState[2][1]) and surroundState[1][2]:
+                                    attBallVel = [-1, 1]
+                                else:
+                                    attBallVel = [-1, -1]
+                            elif attBallVel == [-1, 1]:
+                                # going bot left
+                                if surroundState[1][0] and (not surroundState[2][1]):
+                                    attBallVel = [1, 11]
+                                elif (not surroundState[1][0]) and surroundState[2][1]:
+                                    attBallVel = [-1, -1]
+                                else:
+                                    attBallVel = [1, -1]
+                            else:
+                                # going top left
+                                if surroundState[0][1] and (not surroundState[1][0]):
+                                    attBallVel = [-1, 1]
+                                elif (not surroundState[0][1]) and surroundState[1][0]:
+                                    attBallVel = [1, -1]
+                                else:
+                                    attBallVel = [1, 1]
+
+                            attStage.changeColor([x, y], None)
+            
+            offset(attBall, attBallVel)
+
+            if attBall.curr_pos[0] in [0,19]:
+                attBallVel[0] *= -1
+            
+            if (attBall.curr_pos[1] == 37) and (attBall.curr_pos[0] >= attPaddle.curr_pos[0]) and (attBall.curr_pos[0] <= (attPaddle.curr_pos[0] + len(attPaddle.pixelArr[0])-1)):
+                attBallVel[1] *= -1
+            
+            if attBall.curr_pos[1] == 0:
+                attBallVel[1] *= -1
+            
+            if attBall.curr_pos[1] >= 38:
+                endGame()
+            
+            objArr.extend([
+                attBall, attPaddle, attStage
+            ])
+        
+        updateScoreHeader()
+    else:
+        if displayScore:
+            objArr.clear()
+
+            # display score here
+            print("SCORE")
+
+            displayScore = False
+        else:
+            counter += deltaTime
+
+            if counter >= 5:
+                gameChoice = None
+                callHome = True
+                print("OVER :(")
+
 
 def gameFrame():
 
@@ -1641,13 +1911,13 @@ def gameFrame():
         home()
     else:
         if gameChoice == 1:
-            game1()
+            pass
         elif gameChoice == 2:
             game2()
         elif gameChoice == 3:
             game3()
         elif gameChoice == 4:
-            pass
+            game4()
         elif gameChoice == 5:
             pass
         else:
