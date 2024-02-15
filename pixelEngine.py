@@ -1052,24 +1052,34 @@ def updateScoreHeader():
         binScoreR = str(bin(scoreRight))[2:]
 
         scoreArray = []
+        unScoreArray = []
         for i in range(len(binScoreL)):
             if (i%2)==0:
                 if binScoreL[i] == "1":
                     scoreArray.append([int(i/2),0])
+                else:
+                    unScoreArray.append([int(i/2),0])
             else:
                 if binScoreL[i] == "1":
                     scoreArray.append([int((i-1)/2),1])
+                else:
+                    unScoreArray.append([int((i-1)/2),1])
 
         for i in range(len(binScoreR)):
             if (i%2)==0:
                 if binScoreR[i] == "1":
                     scoreArray.append([19-int(i/2),0])
+                else:
+                    unScoreArray.append([19-int(i/2),0])
             else:
                 if binScoreR[i] == "1":
                     scoreArray.append([19-int((i-1)/2),1])
+                else:
+                    unScoreArray.append([19-int((i-1)/2),1])
 
         scoreObj = object({
-            "#ffffff" : scoreArray
+            "#dddddd" : scoreArray,
+            "#444444" : unScoreArray
         }, {
             "z_value" : 100,
             "pos" : [0,0],
@@ -1394,14 +1404,14 @@ def game1():
             global shape_color, shape_playing
             shape_color = random.randint(0,6)
             shape_playing = list(tuple(TETROMINOS[random.randint(0,6)]))
-            shape_playing = list(tuple(TETROMINOS[-1]))
+            # shape_playing = list(tuple(TETROMINOS[-1]))
 
             obj = object({
                 COLORS[shape_color]: shape_playing
             },
             {
                 "z_value": 4,
-                "pos": [1,4],
+                "pos": [10,4],
                 "collision": True,
                 "stayInFrame": True,
                 "rotation": True
@@ -1454,7 +1464,7 @@ def game1():
             return False
         
         def updateGame():
-            global obj_playing, playing, shape_playing, shape_color, filled_pixels, Game_Over
+            global obj_playing, playing, shape_playing, shape_color, filled_pixels, Game_Over, scoreLeft
 
             
             if (has_collided_with_bottom(obj_playing) or collided_with_bottom(obj_playing)) and not Game_Over:
@@ -1477,15 +1487,18 @@ def game1():
                             else:
                                 obj3.changeColor([j,i],filled_pixels[i-1][j])
                         i -= 1
+                        scoreLeft += 50
                 shape_playing = TETROMINOS[random.randint(0,6)]
                 newTetromino = createTetromino()
+                scoreLeft += 10
                 playing = True
                 obj_playing = newTetromino
                 objArr.append(newTetromino)
-                temp2 = obj_playing.curr_pos
-                offset(obj_playing,[0,1])
-                if temp2 == obj_playing.curr_pos:
-                    Game_Over = True
+                # temp2 = obj_playing.curr_pos
+                # offset(obj_playing,[0,3])
+                # if temp2 == obj_playing.curr_pos:
+                #     Game_Over = True
+                #     print("YOOOOOOOOOOOOOOOOOOOOOOOOOOOOOo")
                 return False
         
         def Tet_rotate(obj, amt):
@@ -1623,11 +1636,23 @@ def game1():
             else:
                 pass
             # print(obj_playing.rigPad)
-            updateGame()
-            offset(obj_playing, [0,1])
+            gameEnded = False
+            emptyCount = 0
+            for i in obj3.pixelArr:
+                if i.count(None) == 20:
+                    emptyCount += 1
+            if emptyCount <= 15:
+                endGame()
+                gameEnded = True
 
-            objArr.append(obj3)
-            objArr.append(obj_playing)
+            if not gameEnded:
+                updateGame()
+                offset(obj_playing, [0,1])
+
+                objArr.append(obj3)
+                objArr.append(obj_playing)
+
+        
         
         # print(deltaTime)
         
@@ -1637,7 +1662,10 @@ def game1():
             objArr.clear()
 
             # display score here
-            print("SCORE")
+            scoreObj = txtObj("SCORE",[0,14],"#bc4749",5,False,False)
+            objArr.append(scoreObj)
+            scoreObj = txtObj(str(scoreLeft),[1,21],"#bc4749",5,False,False)
+            objArr.append(scoreObj)
 
             displayScore = False
         else:
@@ -2223,14 +2251,73 @@ def game4():
                 "stayInFrame": True,
                 "collision": True
             })
-            attStage = object({
-                "#ffffff": [
-                    [0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0],
-                    [6, 0], [7, 0], [8, 0], [9, 0], [10, 0], [11, 0]
+
+            walls = [
+                [
+                    [0, 0], [1, 0], [2, 0]
+                ],
+                [
+                    [0, 0], [1, 0], [2, 0],
+                                    [2, 1],
+                                    [2, 2]
+                ],
+                [
+                            [1, -1],
+                    [0, 0], [1, 0], [2, 0],
+                            [1, 1]
+                ],
+                [
+                    [0, 0],        [2, 0],
+                            [1, 1],
+                    [0, 2],        [2, 2]
+                ],
+                [
+                    [0,0],
+                    [0,1],
+                    [0,2]
+                ]
+            ]
+
+            lvl = []
+            cellCount = 0
+            # generate level
+            while True:
+                wallChoice = walls[random.randint(0, len(walls)-1)]
+                cellCount += len(wallChoice)
+
+                cellPos = [
+                    random.randint(0, 19),
+                    random.randint(0, 25)
+                ]
+
+                for coord in wallChoice:
+                    newCoord = [
+                        coord[0] + cellPos[0],
+                        coord[1] + cellPos[1]
                     ]
+
+                    if newCoord[0] < 0:
+                        newCoord[0] += 20
+                    if newCoord[0] > 19:
+                        newCoord[0] -= 20
+
+                    if newCoord[1] < 0:
+                        newCoord[1] += 25
+                    if newCoord[1] > 25:
+                        newCoord[1] -= 25
+                    
+                    if (newCoord not in lvl) and (newCoord != [0,0]):
+                        lvl.append(newCoord)
+
+                if cellCount >= 50:
+                    break
+
+            attStage = object({
+                None : [[0,0]],
+                "#ffffff": lvl
             }, {
                 "z_value": 4,
-                "pos": [0, 15],
+                "pos": [0, 0],
                 "stayInFrame": True,
                 "collision": True
             })
