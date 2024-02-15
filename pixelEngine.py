@@ -17,9 +17,12 @@ import random
 # ║ Snake Game                     : AYUSH YADAV     ║
 # ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
 # ║ Pong Game                      : ATHARV SALONKHE ║                             
-# ║                                : AYUSH YADAV     ║ (bug fixes, significant improvements)
+# ║                                : AYUSH YADAV     ║ (bug fixes)
 # ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
 # ║ Attari Game                    : AYUSH YADAV     ║ 
+# ║░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░║
+# ║ Tetris                         : HRISHANT        ║ 
+# ║                                : NILESH BHATIA   ║
 # ╚═════════SOFTWARE HARDWARE COMMUNICATION══════════╝
 
 
@@ -292,10 +295,17 @@ def updateCollision(obj, newPixArr):
     obj.calcBoundOrigin(size)
 
 # this functions is used to check collisions with the objects already present in objArr
-def checkOverlap(obj, newPos):
+def checkOverlap(obj, newPos, against=None):
     global objArr
+
+    checkObjs = None
+    if against is not None:
+        checkObjs = against.copy()
+    else:
+        checkObjs = objArr.copy()
+    
     isOverLap = False
-    for ob in objArr:
+    for ob in checkObjs:
         if ob.collision and (ob != obj) and (ob.zVal == obj.zVal):
             for y in range(len(ob.pixelArr)):
                 for x in range(len(ob.pixelArr[y])):
@@ -335,7 +345,7 @@ def checkOverlap(obj, newPos):
     # print(isOverLap) # DEBUG
     return isOverLap
 
-def offset(obj, offset):
+def offset(obj, offset, against=None):
 
     if offset[0] == 0:
         Xdir = 0
@@ -358,10 +368,16 @@ def offset(obj, offset):
             step = round((C2[1] - j[1]) / (abs(offset[0] - j[0])))
         j[0] += Xdir
 
-        isOverlapping = checkOverlap(obj, [
-            obj.curr_pos[0] + j[0],
-            obj.curr_pos[1] + j[1]
-        ])
+        if against is not None:
+            isOverlapping = checkOverlap(obj, [
+                obj.curr_pos[0] + j[0],
+                obj.curr_pos[1] + j[1]
+            ], against)
+        else:
+            isOverlapping = checkOverlap(obj, [
+                obj.curr_pos[0] + j[0],
+                obj.curr_pos[1] + j[1]
+            ])
 
         if isOverlapping:
             pass
@@ -371,10 +387,16 @@ def offset(obj, offset):
         for y in range(abs(step)):
             j[1] += Ydir
 
-            isOverlapping = checkOverlap(obj, [
-                obj.curr_pos[0] + j[0],
-                obj.curr_pos[1] + j[1]
-            ])
+            if against is not None:
+                isOverlapping = checkOverlap(obj, [
+                    obj.curr_pos[0] + j[0],
+                    obj.curr_pos[1] + j[1]
+                ], against)
+            else:
+                isOverlapping = checkOverlap(obj, [
+                    obj.curr_pos[0] + j[0],
+                    obj.curr_pos[1] + j[1]
+                ])
 
             if isOverlapping:
                 pass
@@ -384,12 +406,18 @@ def offset(obj, offset):
         if (j == C2):
             break
 
-def rotate(obj, amt):
+def rotate(obj, amt, against=None):
     # this function rotates the given 'obj' by 'amt'
     # amt +1 = CCW by 90 degree ; +2 = CCW by 180 degree
     # amt -1 = CW  by 90 degree ; -2 = CW  by 180 degree
 
     def checkBounds(obj):
+
+        # print(obj.lefPad, obj.rigPad)
+        if (obj.curr_pos[0] < 0) or (obj.curr_pos[0] > 19):
+            return False
+        if (obj.curr_pos[1] < 0) or (obj.curr_pos[1] > 39):
+            return False
         if obj.curr_pos[0] + obj.rigPad > 19:
             return False
         if obj.curr_pos[0] - obj.lefPad < 0:
@@ -435,17 +463,22 @@ def rotate(obj, amt):
     while amt < -4:
         amt += 4
     
+    # print(checkOverlap(obj,obj.curr_pos, against=against), not checkBounds(obj)) 
+    
     # iterate rotation
     for a in range(abs(amt)):
         updateCollision(obj, getNewPixArr())
 
+        # print(obj.lefPad, obj.rigPad, obj.topPad, obj.botPad, checkBounds(obj))
         # checking if this rotation causes collision
-        if checkOverlap(obj,obj.curr_pos) and checkBounds(obj):
+        if checkOverlap(obj, obj.curr_pos, against=against) or (not checkBounds(obj)):
+            print("YO")
             # reverting changes
             updateCollision(obj, preservedArr.copy())
 
             # breaking the loop
             break
+    
 
 #         [0,0],[1,0],[2,0],
 #         [0,1],[1,1],[2,1],
@@ -913,6 +946,10 @@ leftColor = "#ff0000"
 rightColor = "#00ff00"
 healthLeft = 0
 healthRight = 0
+fps = 10
+targetDt = 1 / fps
+frameTime = 0
+mainMatrix = []
 
 # LIFE can be in range [0, 5]
 # ================================================================================================
@@ -948,6 +985,33 @@ attPaddle = None
 attBall = None
 attOnce = None
 attBallVel = None
+
+# =================================================================================================
+spcOnce = None
+spcGun = None
+spcGunPos = None
+spcBs = None
+spcKeyReg = None
+spcKeyChoice = None
+spcKeys = None
+
+# =================================================================================================
+TETROMINOS = None
+COLORS = None
+obj_playing = None
+tetOnce = None
+shape_color = None
+shape_playing = None
+playing = None
+filled_pixels = None
+Game_Over = None
+count = None
+obj1 = None
+obj2 = None
+obj3 = None
+line_filled = None
+Last_Empty_Line = None
+transformed_matrix = None
 
 
 def updateScoreHeader():
@@ -1025,6 +1089,9 @@ def home():
     global snakeArr, applePos, snakeMove, snakeAppleAloneTime, snakeAppleEscape
     global pongPaddleT, attPaddle, pongBall, pongPowerUp, pongOnce, pongBallVel, pongBreakTimer, pongEnd
     global attPaddle, attBall, attOnce, attBallVel, attStage
+    global spcGunPos, spcOnce, spcBs, spcKeyReg, spcKeyChoice
+    global TETROMINOS, COLORS, obj_playing, tetOnce, shape_color, shape_playing, playing, filled_pixels, Game_Over
+    global count, obj1, obj2, obj3, line_filled, Last_Empty_Line, transformed_matrix
 
     objArr.clear()
     background = "#000000"
@@ -1032,6 +1099,40 @@ def home():
     if getKeyState("1"):
         gameChoice = 1
         callHome = False
+
+        background = "#222222" # default color of the empty space change if needed
+        TETROMINOS = [
+                [[0, 0], [0, 1], [1, 0], [1,1]], # O
+                [[0, 0], [0, 1], [1, 1], [2,1]], # L
+                [[0, 1], [1, 1], [2, 1], [2,0]], # J 
+                [[0, 1], [1, 0], [1, 1], [2,0]], # Z
+                [[0, 0], [1, 0], [-1,0], [0,1]], # T
+                [[0, 0], [0, 1], [1, 1], [2,1]], # S
+                [[0, 1], [1, 1], [2, 1], [3,1]], # I
+            ]
+        COLORS = [
+            "#75D9A0",   #Light Green
+            "#FFE300",   #Yellow
+            "#D17FD6",   #Purple
+            "#EB2226",   #Red
+            "#69DFDB",   #Cyan
+            "#FA7036",   #Orange
+            "#E8E8E8"    #Light Gray
+            ]
+        obj_playing = None
+        tetOnce = True
+        shape_playing = None
+        playing = None
+        count = 0
+        obj1 = None
+        obj2 = None
+        obj3 = None
+        shape_color = 0
+        line_filled = 0
+        Last_Empty_Line = 0
+        Game_Over = False
+        filled_pixels =[]
+        transformed_matrix = None
     elif getKeyState("2"):
         gameChoice = 2
         callHome = False
@@ -1071,6 +1172,12 @@ def home():
     elif getKeyState("5"):
         gameChoice = 5
         callHome = False
+
+        spcGunPos = [10, 37]
+        spcOnce = True
+        spcBs = None
+        spcKeyReg = 0
+        spcKeyChoice = None
     else:
         pass
 
@@ -1144,11 +1251,11 @@ def demoGame():
             beginTimer = False
             beginGame = True
             objArr.clear()
-        elif counter <= 1:
+        elif counter <= 0.1:
             countDown(1)
-        elif counter <= 2:
+        elif counter <= 0.4:
             countDown(2)
-        elif counter >= 3:
+        elif counter >= 0.7:
             countDown(3)
     elif beginGame:
 
@@ -1173,6 +1280,358 @@ def demoGame():
 
         if debugCounter > 360:
             endGame()
+    else:
+        if displayScore:
+            objArr.clear()
+
+            # display score here
+            print("SCORE")
+
+            displayScore = False
+        else:
+            counter += deltaTime
+
+            if counter >= 5:
+                gameChoice = None
+                callHome = True
+                print("OVER :(")
+
+def game1():
+    # TETRIS
+
+    def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
+        num = int(num)
+
+        if (num > 3) or (num < 0):
+            raise Exception("time out of range")
+        
+        objArr.clear()
+
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
+
+    # variable access
+    global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
+
+    global TETROMINOS, COLORS, tetOnce, obj_playing, shape_color, shape_playing, count, obj1, obj2, obj3
+    global line_filled, Last_Empty_Line, filled_pixels, transformed_matrix
+
+    if once:
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
+
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
+
+            objArr.append(game1Title)
+
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
+    elif beginTimer:
+        counter -= deltaTime
+        beginTimer = False
+        beginGame = True
+        
+        if counter <= 0:
+            beginTimer = False
+            beginGame = True
+            objArr.clear()
+        elif counter <= 1:
+            countDown(1)
+        elif counter <= 2:
+            countDown(2)
+        elif counter >= 3:
+            countDown(3)
+    elif beginGame:
+
+        def endGame():
+            global beginGame, displayScore, counter
+            # Call this function to end game
+            beginGame = False
+            displayScore = True
+            counter = 0
+        
+        def has_collided_with_bottom(obj):
+            # Check if the object's bounding box extends beyond the bottom of the screen
+            if obj.curr_pos[1] + obj.botPad == 39:
+                return True
+            else:
+                return False
+            
+        def collided_with_bottom(obj):
+            global obj_playing, obj3
+
+            return checkOverlap(obj_playing, [obj.curr_pos[0], obj.curr_pos[1]+1], against=[obj3])
+        
+        def createTetromino():
+            global shape_color, shape_playing
+            shape_color = random.randint(0,6)
+            shape_playing = list(tuple(TETROMINOS[random.randint(0,6)]))
+            shape_playing = list(tuple(TETROMINOS[-1]))
+
+            obj = object({
+                COLORS[shape_color]: shape_playing
+            },
+            {
+                "z_value": 4,
+                "pos": [1,4],
+                "collision": True,
+                "stayInFrame": True,
+                "rotation": True
+            })
+            return obj
+        
+        def getMatrix():
+            global transformed_matrix
+            global filled_pixels, obj3
+            global COLORS
+            global mainMatrix
+            grid = obj3.pixelArr.copy()
+
+            transformed_matrix = []
+            filled_pixels = grid.copy()
+            # Iterate through each row in the input matrix
+            for row in grid:
+                # Create a new row for the transformed matrix
+                transformed_row = []
+
+                # Iterate through each element in the row
+                for element in row:
+                    # Check if the element is "000000" and replace it with 0, otherwise replace with 1
+                    # transformed_element = 0 if element == "#000000" else 1
+                    if element not in COLORS:
+                        transformed_element = 0
+                    else: 
+                        transformed_element = 1
+
+                    # Append the transformed element to the transformed row
+                    transformed_row.append(transformed_element)
+
+                # Append the transformed row to the transformed matrix
+                transformed_matrix.append(transformed_row)
+            return transformed_matrix
+        
+        def checkLineFull(transformed_matrix):
+            global line_filled,Last_Empty_Line
+
+            # print(transformed_matrix)
+            for sublist in transformed_matrix:
+                # Calculate the sum of elements in the sublist
+                sublist_sum = sum(sublist)
+                # Check if the sum is equal to 20
+                if sublist_sum == 20:
+                    line_filled = transformed_matrix.index(sublist)
+                    print(line_filled)
+                    return True
+            # If no sublist has a sum equal to 20, return False
+            return False
+        
+        def updateGame():
+            global obj_playing, playing, shape_playing, shape_color, filled_pixels, Game_Over
+
+            
+            if (has_collided_with_bottom(obj_playing) or collided_with_bottom(obj_playing)) and not Game_Over:
+                # If collision with bottom, spawn a new tetromino
+                temp = obj_playing.curr_pos
+                # objArr.remove(obj_playing)
+                for item in shape_playing:
+                    obj3.changeColor([item[0]+temp[0],item[1]+temp[1]],COLORS[shape_color])
+
+                # updateCollision(obj3, obj3.pixelArr)
+
+                while checkLineFull(getMatrix()):
+                    i = line_filled
+                    while i >= 6:
+                        for j in range(0,20):
+                            if i == 6:
+                                obj3.changeColor([j,i],None)
+                            elif filled_pixels[i-1][j] not in COLORS:
+                                obj3.changeColor([j,i],None)
+                            else:
+                                obj3.changeColor([j,i],filled_pixels[i-1][j])
+                        i -= 1
+                shape_playing = TETROMINOS[random.randint(0,6)]
+                newTetromino = createTetromino()
+                playing = True
+                obj_playing = newTetromino
+                objArr.append(newTetromino)
+                temp2 = obj_playing.curr_pos
+                offset(obj_playing,[0,1])
+                if temp2 == obj_playing.curr_pos:
+                    Game_Over = True
+                return False
+        
+        def Tet_rotate(obj, amt):
+            # this function rotates the given 'obj' by 'amt'
+            # amt +1 = CCW by 90 degree ; +2 = CCW by 180 degree
+            # amt -1 = CW  by 90 degree ; -2 = CW  by 180 degree
+            if amt ==-1:
+                for i in shape_playing:
+                    shape_playing[shape_playing.index(i)] = [-i[1],i[0]]
+            elif amt ==1:
+                for i in shape_playing:
+                    shape_playing[shape_playing.index(i)] = [i[1],-i[0]]
+            
+            def checkBounds(obj):
+
+                # print(obj.lefPad, obj.rigPad)
+                if (obj.curr_pos[0] < 0) or (obj.curr_pos[0] > 19):
+                    return False
+                if (obj.curr_pos[1] < 0) or (obj.curr_pos[1] > 39):
+                    return False
+                if obj.curr_pos[0] + obj.rigPad > 19:
+                    return False
+                if obj.curr_pos[0] - obj.lefPad < 0:
+                    return False
+                if obj.curr_pos[1] + obj.botPad > 39:
+                    return False
+                if obj.curr_pos[1] - obj.topPad < 0:
+                    return False
+                return True
+            
+            def getNewPixArr():
+                mid = obj.rot_mid
+                newPixArr = []
+
+                # make empty
+                temp = []
+
+                for x in range(len(obj.pixelArr)):
+                    temp.append(None)
+                for x in range(len(obj.pixelArr)):
+                    newPixArr.append(temp.copy())
+                
+                # iterating through the original Array and making the necessary swaps
+                for y in range(len(obj.pixelArr)):
+                    for x in range(len(obj.pixelArr)):
+                        dX = x - mid
+                        dY = y - mid
+
+                        # CCW SWAP
+                        if amt < 0:
+                            newPixArr[mid + dX][mid - dY] = obj.pixelArr[y][x]
+                        else:
+                            newPixArr[mid - dX][mid + dY] = obj.pixelArr[y][x] 
+                return newPixArr
+            
+            preservedArr = obj.pixelArr.copy() # save PixArr
+
+            # resolve Rotate
+            while amt > 4:
+                amt -= 4
+            while amt < -4:
+                amt += 4
+            
+            # iterate rotation
+            for a in range(abs(amt)):
+                newArr = getNewPixArr()
+
+                # checking if this rotation causes collision
+                obj.pixelArr = newArr
+
+                coordArr = []
+                for y in range(len(newArr)):
+                    for x in range(len(newArr)):
+                        if newArr[y][x] is not None:
+                            coordArr.append([
+                                x - obj.rot_mid,
+                                y - obj.rot_mid
+                            ])
+
+                size = obj.getBoundingBox(coordArr)
+                obj.calcPadding()
+                obj.calcBoundOrigin(size)
+
+                if checkOverlap(obj, obj.curr_pos, against=[obj3]) or (not checkBounds(obj)):
+                    # reverting changes
+                    newArr = preservedArr.copy()
+                    obj.pixelArr = newArr
+                    if amt == -1:
+                        for i in shape_playing:
+                            shape_playing[shape_playing.index(i)] = [i[1],-i[0]]
+                    elif amt == 1:
+                        for i in shape_playing:
+                            shape_playing[shape_playing.index(i)] = [-i[1],i[0]]
+                    # recreating the coord map
+                    coordArr = []
+                    for y in range(len(newArr)):
+                        for x in range(len(newArr)):
+                            if newArr[y][x] is not None:
+                                coordArr.append([
+                                    x - obj.rot_mid,
+                                    y - obj.rot_mid
+                                ])
+                    
+                    # recalculating the appropriate variables
+                    size = obj.getBoundingBox(coordArr)
+                    obj.calcPadding()
+                    obj.calcBoundOrigin(size)
+
+                    # breaking the loop
+                    break
+        
+        objArr.clear()
+        
+        # GAME HERE
+        if tetOnce:
+            tetOnce = False
+
+            obj3 = rectangleObj([0,0],[19,39], fill=None,zValue=4,stayInFrame=True, collision=True)
+            
+            obj_playing = createTetromino()
+            objArr.append(obj3)
+            objArr.append(obj_playing)
+        else:
+            # print(obj_playing.rigPad)
+            if getKeyState('a') and not Game_Over:
+                offset(obj_playing, [-1,0], against=[obj3])
+            elif getKeyState('d') and not Game_Over:
+                offset(obj_playing, [1,0], against=[obj3])
+            elif getKeyState('s') and not Game_Over:
+                offset(obj_playing, [0,1], against=[obj3])
+            elif getKeyState('right') and not Game_Over:
+                Tet_rotate(obj_playing, -1)
+            elif getKeyState('Left') and not Game_Over:
+                Tet_rotate(obj_playing,  1)
+            else:
+                pass
+            # print(obj_playing.rigPad)
+            updateGame()
+            offset(obj_playing, [0,1])
+
+            objArr.append(obj3)
+            objArr.append(obj_playing)
+        
+        # print(deltaTime)
+        
+        updateScoreHeader()
     else:
         if displayScore:
             objArr.clear()
@@ -1384,16 +1843,6 @@ def game2():
 
         # AESTHATICS
         background = "#a7c957"
-
-        nilayAes = object({
-            "#e94f37" : [[0,0]]
-        },{
-            "z_value" : 1,
-            "pos" : [0,0],
-            "stayInFrame" : True,
-            "collision" : False,
-            "rotation" : False
-        })
         
         updateScoreHeader()
         debugCounter += deltaTime
@@ -1928,28 +2377,166 @@ def game4():
                 callHome = True
                 print("OVER :(")
 
+def game5():
+
+    def countDown(num):
+
+        # A demo count down characters have been made, can be changed as per needs
+
+        global objArr
+
+        num = int(num)
+
+        if (num > 3) or (num < 0):
+            raise Exception("time out of range")
+        
+        objArr.clear()
+
+        if num == 3:
+            countObj = txtObj("3",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 2:
+            countObj = txtObj("2",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        elif num == 1:
+            countObj = txtObj("1",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        else:
+            countObj = txtObj("GO",[8,17],"#ffffff",1,False,False)
+            objArr.append(countObj)
+        
+
+    # variable access
+    global objArr, deltaTime, once, beginTimer, counter, beginGame, displayScore
+    global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
+    global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
+
+    global spcOnce, spcGun, spcGunPos, spcBs, spcKeyChoice, spcKeyReg
+
+    if once:
+        if not titleDisplayed:
+            print("game 1 now playing")
+            # Game initialization
+            objArr.clear()
+            once = True
+
+            # this is your title : make exactly one object that comprises of your entire title screen
+            game1Title = txtObj("T",[9,17],"#ffff00",1,True,False)
+
+            objArr.append(game1Title)
+
+            print("Timer begins")
+
+            titleDisplayed = True
+        else:
+            titleCounter += deltaTime
+            if titleCounter >= 1:
+                once = False
+                beginTimer = True
+    elif beginTimer:
+        counter -= deltaTime
+        
+        if counter <= 0:
+            beginTimer = False
+            beginGame = True
+            objArr.clear()
+        elif counter <= 1:
+            countDown(1)
+        elif counter <= 2:
+            countDown(2)
+        elif counter >= 3:
+            countDown(3)
+    elif beginGame:
+
+        def endGame():
+            global beginGame, displayScore, counter
+            # Call this function to end game
+            beginGame = False
+            displayScore = True
+            counter = 0
+        
+        objArr.clear()
+        
+        # GAME HERE
+        if spcOnce:
+            spcBs = object({ #battleship
+                "#021ed4": [[0,-1], [0,-2]], #red
+                "#7b1ff2": [[0,1]], #grey
+                "#367beb": [[0,0]], #og
+                "#3f3cfa": [[-1,0],[1,0]], #dark blue
+                "#005285": [[-1,1],[1,1],[-1,2],[1,2]] #boosters
+                },
+                {
+                    "z_value": 5,
+                    "pos": [10,37],
+                    "collision" : True,
+                    "stayInFrame": True
+                })
+            
+            spcOnce = False
+        else:
+
+            registryTime = 0.01
+            if getKeyState("A"):
+                if (spcKeyChoice == "A") and (spcKeyReg >= registryTime):
+                    offset(spcBs, [-1,0])
+                    spcKeyReg = 0
+                else:
+                    spcKeyChoice = "A"
+                    spcKeyReg += deltaTime
+            if getKeyState("D"):
+                if (spcKeyChoice == "B") and (spcKeyReg >= registryTime):
+                    offset(spcBs, [1,0])
+                    spcKeyReg = 0
+                else:
+                    spcKeyChoice = "B"
+                    spcKeyReg += deltaTime
+            
+            objArr.append(spcBs)
+        
+        updateScoreHeader()
+    else:
+        if displayScore:
+            objArr.clear()
+
+            # display score here
+            print("SCORE")
+
+            displayScore = False
+        else:
+            counter += deltaTime
+
+            if counter >= 5:
+                gameChoice = None
+                callHome = True
+                print("OVER :(")
+
 
 def gameFrame():
 
     global once, beginTimer, counter, beginGame, displayScore
+    global targetDt, frameTime, deltaTime
 
-    if callHome:
-        home()
-    else:
-        if gameChoice == 1:
-            pass
-        elif gameChoice == 2:
-            game2()
-        elif gameChoice == 3:
-            game3()
-        elif gameChoice == 4:
-            game4()
-        elif gameChoice == 5:
-            pass
+    frameTime += deltaTime
+
+    if frameTime >= targetDt:
+        frameTime = 0
+
+        if callHome:
+            home()
         else:
-            pass
-    # OUT SCREEN
-    pass
+            if gameChoice == 1:
+                game1()
+            elif gameChoice == 2:
+                game2()
+            elif gameChoice == 3:
+                game3()
+            elif gameChoice == 4:
+                game4()
+            elif gameChoice == 5:
+                game5()
+            else:
+                pass
 
 
 # ================================================
@@ -1957,15 +2544,15 @@ def gameFrame():
 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
 def renderFrame(cv, side):
-    global objArr
+    global objArr, mainMatrix
     # make LED MATRIX with default color
-    matrix = []
+    mainMatrix = []
 
     row_temp = []
     for i in range(20):
         row_temp.append(background)
     for i in range(40):
-        matrix.append(row_temp.copy())
+        mainMatrix.append(row_temp.copy())
     
     # arrange objects wrt z_values
     orderedArray = [] # the array that shall store the objectss in z-value order
@@ -1986,7 +2573,7 @@ def renderFrame(cv, side):
     objArr = orderedArray.copy()
     orderedArray.clear()
         
-    # iterating through all objects and updating the matrix grid
+    # iterating through all objects and updating the mainMatrix grid
     for obj in objArr:
         # get the pixelArr
         pixelArr = obj.pixelArr
@@ -1996,34 +2583,34 @@ def renderFrame(cv, side):
         # iterating through all pixels of the pixelArray
         for r in range(len(pixelArr)):
             for c in range(len(pixelArr[r])):
-                onMatrixPos_x = c - obj.bound_origin[0] + obj.curr_pos[0]
-                onMatrixPos_y = r - obj.bound_origin[1] + obj.curr_pos[1]
-                if (onMatrixPos_x >= 0) and (onMatrixPos_x <= 19):
-                    if (onMatrixPos_y >= 0) and (onMatrixPos_y <= 39):
+                onmainMatrixPos_x = c - obj.bound_origin[0] + obj.curr_pos[0]
+                onmainMatrixPos_y = r - obj.bound_origin[1] + obj.curr_pos[1]
+                if (onmainMatrixPos_x >= 0) and (onmainMatrixPos_x <= 19):
+                    if (onmainMatrixPos_y >= 0) and (onmainMatrixPos_y <= 39):
                         if pixelArr[r][c] is not None:
-                            matrix[onMatrixPos_y][onMatrixPos_x] = pixelArr[r][c]
+                            mainMatrix[onmainMatrixPos_y][onmainMatrixPos_x] = pixelArr[r][c]
     
-    # for x in matrix:
+    # for x in mainMatrix:
     #     print(x)
     # z = int(input(""))
                             
-    # COLUMN WISE MATRIX
+    # COLUMN WISE mainMatrix
     colMat = []
 
     for colNum in range(20):
         firstTime = True
         for rowNum in range(40):
             if firstTime:
-                colMat.append([matrix[rowNum][colNum]])
+                colMat.append([mainMatrix[rowNum][colNum]])
                 firstTime = False
             else:
-                colMat[colNum].append(matrix[rowNum][colNum])
+                colMat[colNum].append(mainMatrix[rowNum][colNum])
     
-    # this column matrix stores data column wise as is required by the row-wise arrangement of the pixel
+    # this column mainMatrix stores data column wise as is required by the row-wise arrangement of the pixel
 
 
     # VISUAL DEBUG
-    # painting the tkinter output screen as per matrix array
+    # painting the tkinter output screen as per mainMatrix array
     cv.delete("all") # clear screen
     for r in range(40):
         for c in range(20):
@@ -2031,7 +2618,7 @@ def renderFrame(cv, side):
             Xf = c*side + side + 10
             Yi = r*side + 10
             Yf = r*side + side + 10
-            temp = cv.create_rectangle(Xi, Yi, Xf, Yf, fill=matrix[r][c])
+            temp = cv.create_rectangle(Xi, Yi, Xf, Yf, fill=mainMatrix[r][c])
 
 
 # main loop of the game will run every frame
@@ -2074,7 +2661,7 @@ cv.pack()
 # cv.create_rectangle(0, 0, 420, 820, fill="#ff0000", outline="black")
 
 # will start the frame by frame stuff 35ms delay shall create an almost 30FPS scenario
-root.after(35, nxtFrame, root, cv, sc)
+root.after(1, nxtFrame, root, cv, sc)
 
 # Tk WINDOW
 root.mainloop()

@@ -383,7 +383,7 @@ def getMatrix():
         for element in row:
             # Check if the element is "000000" and replace it with 0, otherwise replace with 1
             # transformed_element = 0 if element == "#000000" else 1
-            if element == background:
+            if element not in COLORS:
                 transformed_element = 0
             else: 
                 transformed_element = 1
