@@ -1535,6 +1535,7 @@ def home():
     global spcGunPos, spcOnce, spcBs, spcKeyReg, spcKeyChoice
     global TETROMINOS, COLORS, obj_playing, tetOnce, shape_color, shape_playing, playing, filled_pixels, Game_Over
     global count, obj1, obj2, obj3, line_filled, Last_Empty_Line, transformed_matrix
+    global count, countm, flagc , obj1, obj2, text, Index, life , GameFlag , Gf3 , Gf2 , Gf1 , Gf0 , score, scoreflag, endflag
 
     objArr.clear()
     background = "#000000"
@@ -1585,7 +1586,7 @@ def home():
         Game_Over = False
         filled_pixels =[]
         transformed_matrix = None
-        targetDt = 1 / 10
+        targetDt = 1 / 5
     elif getKeyState("2"): # SNAKE
         gameChoice = 2
         callHome = False
@@ -1595,7 +1596,7 @@ def home():
         snakeMove = [0, -1]
         snakeAppleAloneTime = 0
         snakeAppleEscape = 5
-        targetDt = 1 / 30
+        targetDt = 1 / 20
     elif getKeyState("6"): # PONG
         gameChoice = 3
         callHome = False
@@ -1629,11 +1630,23 @@ def home():
         gameChoice = 5
         callHome = False
 
-        spcGunPos = [10, 37]
-        spcOnce = True
-        spcBs = None
-        spcKeyReg = 0
-        spcKeyChoice = None
+        count = 0
+        countm= 0
+        flagc = 0
+        obj1 = None
+        obj2 = None
+        text = None
+        Index = None
+        life = 3
+        GameFlag = 1
+        Gf3 = 1
+        Gf2 = 1
+        Gf1 = 1
+        Gf0 = 1
+        score = 0
+        scoreflag  =1
+        endflag = 1
+
         targetDt = 1 / 30
     elif getKeyState("3"): # PIXEL SHOOTER
         targetonce = True
@@ -2176,16 +2189,14 @@ def game1():
             objArr.append(obj_playing)
         else:
             # print(obj_playing.rigPad)
-            if getKeyState('a') and not Game_Over:
+            if getKeyState('A') and not Game_Over:
                 offset(obj_playing, [-1,0], against=[obj3])
-            elif getKeyState('d') and not Game_Over:
+            elif getKeyState('D') and not Game_Over:
                 offset(obj_playing, [1,0], against=[obj3])
-            elif getKeyState('s') and not Game_Over:
+            elif getKeyState('S') and not Game_Over:
                 offset(obj_playing, [0,1], against=[obj3])
-            elif getKeyState('right') and not Game_Over:
+            elif getKeyState('W') and not Game_Over:
                 Tet_rotate(obj_playing, -1)
-            elif getKeyState('Left') and not Game_Over:
-                Tet_rotate(obj_playing,  1)
             else:
                 pass
             # print(obj_playing.rigPad)
@@ -2740,10 +2751,10 @@ def game3():
             if getKeyState("E"):
                 if pongPaddleT.curr_pos[0] <= 19 - len(pongPaddleT.pixelArr[0]):
                     offset(pongPaddleT, [1,0])
-            if getKeyState("Left"):
+            if getKeyState("A"):
                 if attPaddle.curr_pos[0] >= 0:
                     offset(attPaddle, [-1,0])
-            if getKeyState("Right"):
+            if getKeyState("D"):
                 if attPaddle.curr_pos[0] <= 19 - len(attPaddle.pixelArr[0]):
                     offset(attPaddle, [1,0])
 
@@ -3196,7 +3207,6 @@ def game5():
     global gameChoice, callHome, titleCounter, titleDisplayed, debugCounter
     global leftColor, rightColor, scoreLeft, scoreRight, healthLeft, healthRight
 
-    global spcOnce, spcGun, spcGunPos, spcBs, spcKeyChoice, spcKeyReg
     global bul1, bul2, bul3, obj2, obj3, obj4, obj5, obj6, heart1, heart2, heart3, life, gameEnd, gameFlag2, endflag
     global bs1, Mon1, Mon2, Mon3, line, Space, Invader, backg, Scoreobj, gameStart, gameFlag, count, score, flagc, GameOver1, GameOver2
     gameFlag = 1
@@ -4101,10 +4111,6 @@ def renderFrame(cv, side):
                     if (onmainMatrixPos_y >= 0) and (onmainMatrixPos_y <= 39):
                         if pixelArr[r][c] is not None:
                             mainMatrix[onmainMatrixPos_y][onmainMatrixPos_x] = pixelArr[r][c]
-    
-    # for x in mainMatrix:
-    #     print(x)
-    # z = int(input(""))
                             
     # COLUMN WISE mainMatrix
     colMat = []
@@ -4119,6 +4125,38 @@ def renderFrame(cv, side):
                 colMat[colNum].append(mainMatrix[rowNum][colNum])
     
     # this column mainMatrix stores data column wise as is required by the row-wise arrangement of the pixel
+    def serialPrin(byte):
+        pass
+
+    colorArr = []
+
+    tCount = 0
+    tSum = 0
+
+    for col in colMat:
+        for pix in col:
+
+            i = colorArr.index(pix)
+
+            serialPrin(255)
+            serialPrin(i)
+
+            tCount += 1
+            tSum += i
+
+            if tCount == 10:
+                for j in range(3):
+                    
+                    rem = tSum % 245
+                    quo = int((tSum - rem) / 245)
+
+                    serialPrin(254)
+                    serialPrin(quo)
+                    serialPrin(rem)
+                
+                tCount = 0
+                tSum = 0            
+    
 
 
     # VISUAL DEBUG
